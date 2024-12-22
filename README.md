@@ -25,6 +25,6 @@ Currently Xiaoyu has made sure that the implementations of function `GRAN`, `URA
 
 **The implementation of function `CLP` can not be made sure to be correct. Please refer to the `TODO` in `utils.py` for more information.**
 
-In `ilc.py` is the implementation of iterative lattice construction algorithm from the original paper. Directly modified from the pseudocode.
+In `ilc.py` is the implementation of iterative lattice construction algorithm from the original paper. Directly modified from the pseudocode. **Since `CLP` remains to be done, the 7-th line of the algorithm in the original paper cannot be made sure to be correct.**
 
 In `test_2d.py` is the test code for a 2d-case visualization. It should output a hexagonal lattice as expected however it does not. **Finish the implementation of `CLP` first and investigate the reason for the unexpected result after making sure all utility functions especially `CLP` are correctly implemented.**

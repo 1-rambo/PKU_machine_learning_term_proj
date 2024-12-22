@@ -48,15 +48,66 @@ def RED(B) -> torch.Tensor:
     return torch.tensor(B_np)
 
 
-def CLP(B, x) -> torch.Tensor:
+def CLP(n, B, x) -> torch.Tensor:
     """
     Not sure if the following implementation is correct.
     """
     ## TODO: implement CLP based on algorithm 5 in paper https://doi.org/10.1109/TIT.2011.2143830
-    B_inv = torch.pinverse(B)
-    y = B_inv @ x
-    z = torch.round(y)
-    return z @ B
+    # G : B, r : x
+    C = float('inf')
+    i = n
+    d = torch.full((n,), n)
+    lamb = torch.zeros(n + 1)
+    u = torch.zeros(n)
+    p = torch.zeros(n)
+    Delta = torch.zeros(n)
+    result = torch.zeros(n)
+    F = torch.zeros(n, n)
+    F[n - 1] = x
+    while True:
+        while True:
+            if i != 1:
+                i = i - 1
+                for j in range(d[i] - 1, i, -1):
+                    F[j - 1, i] = F[j, i] - u[j] * B[j, i]
+                p[i] = F[i, i] / B[i, i]
+                u[i] = torch.round(p[i])
+                y = (p[i] - u[i]) * B[i, i]
+                if y > 0:
+                    Delta[i] = 1
+                else:
+                    Delta[i] = 0
+                lamb[i] = lamb[i + 1] + y * y
+            else:
+                result = u
+                C = lamb[0]
+            if lamb[i] >= C:
+                break
+        m = i
+        while True:
+            if i == n - 1:
+                return result
+            else:
+                i = i + 1
+                u[i] = u[i] + Delta[i]
+                if Delta[i] > 0:
+                    Delta[i] = -Delta[i] - 1
+                else:
+                    Delta[i] = -Delta[i] + 1
+                y = (p[i] - u[i]) * B[i, i]
+                lamb[i] = lamb[i + 1] + y * y
+            if lamb[i] < C:
+                break
+        for j in range(m, i):
+            d[j] = i
+        for j in range(m - 1, -1, -1):
+            if d[j] < i:
+                d[j] = i
+            else:
+                break
+               
+
+
 
 
 #####################################################################

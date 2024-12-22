@@ -26,7 +26,7 @@ def iterative_lattice_construction(n):
 
         mu = mu_0 * ratio ** (-t / (T - 1))
         z = URAN(n)
-        y = CLP(B, z @ B)
+        y = z - CLP(n, B, z @ B)
         e = y @ B
 
         for i in range(n):

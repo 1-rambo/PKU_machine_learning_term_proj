@@ -54,21 +54,21 @@ def CLP(n, B, x) -> torch.Tensor:
     """
     ## TODO: implement CLP based on algorithm 5 in paper https://doi.org/10.1109/TIT.2011.2143830
     # G : B, r : x
-    C = float('inf')
+    C = float("inf")
     i = n
-    d = torch.full((n,), n)
+    d = torch.full((n,), n - 1)
     lamb = torch.zeros(n + 1)
     u = torch.zeros(n)
     p = torch.zeros(n)
     Delta = torch.zeros(n)
     result = torch.zeros(n)
     F = torch.zeros(n, n)
-    F[n - 1] = x
+    F[n - 1] = x.clone()
     while True:
         while True:
-            if i != 1:
+            if i != 0:  ## i != 1
                 i = i - 1
-                for j in range(d[i] - 1, i, -1):
+                for j in range(d[i], i, -1):
                     F[j - 1, i] = F[j, i] - u[j] * B[j, i]
                 p[i] = F[i, i] / B[i, i]
                 u[i] = torch.round(p[i])
@@ -76,20 +76,24 @@ def CLP(n, B, x) -> torch.Tensor:
                 if y > 0:
                     Delta[i] = 1
                 else:
-                    Delta[i] = 0
+                    Delta[i] = -1
                 lamb[i] = lamb[i + 1] + y * y
             else:
-                result = u
-                C = lamb[0]
+                result = u.clone()
+                C = float(lamb[0])
             if lamb[i] >= C:
                 break
+        # print(i, result)
         m = i
+        # return result
         while True:
             if i == n - 1:
                 return result
             else:
                 i = i + 1
+
                 u[i] = u[i] + Delta[i]
+
                 if Delta[i] > 0:
                     Delta[i] = -Delta[i] - 1
                 else:
@@ -105,9 +109,6 @@ def CLP(n, B, x) -> torch.Tensor:
                 d[j] = i
             else:
                 break
-               
-
-
 
 
 #####################################################################
@@ -197,3 +198,29 @@ def LLL(v):
         b = lll(b)
 
     return b
+
+
+if __name__ == "__main__":
+
+    """
+    Unit test code for function CLP
+    """
+
+    # identity_mat = torch.eye(2)
+    # x = torch.tensor([1.8, -0.2])
+    # print(identity_mat)
+    # print(x)
+
+    # res = CLP(2, identity_mat, x)
+    # print(res)
+    # res = CLP(10, identity_mat, x)
+    # print(res)
+
+    B = torch.tensor([[1.0, 0.0], [-1.0, 1.0]])
+    red_B = ORTH(RED(B))
+    print(red_B)
+    # x = torch.tensor([-0.0, 1.9])
+    # res = CLP(2, B, x)
+    # print(res @ B)
+
+    pass

@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 mu_0 = 0.005
 ratio = 200
-T = 1000000
+T = 100000
 T_r = 100
 
 

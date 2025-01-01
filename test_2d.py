@@ -14,7 +14,7 @@ if __name__ == "__main__":
     theta = np.dot(r1, r2) / (np.linalg.norm(r1) * np.linalg.norm(r2))
     print("basis r1:", r1)
     print("basis r2:", r2)
-    print("The angle between r1 and r2 is:", theta)
+    print("cos(angle between r1 and r2) is:", theta)
 
     plt.figure(figsize=(5, 5))
 

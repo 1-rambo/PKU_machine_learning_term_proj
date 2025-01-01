@@ -52,7 +52,7 @@ def CLP(n, B, x) -> torch.Tensor:
     """
     Not sure if the following implementation is correct.
     """
-    ## TODO: implement CLP based on algorithm 5 in paper https://doi.org/10.1109/TIT.2011.2143830
+    ## implement CLP based on algorithm 5 in paper https://doi.org/10.1109/TIT.2011.2143830
     # G : B, r : x
     C = float("inf")
     i = n

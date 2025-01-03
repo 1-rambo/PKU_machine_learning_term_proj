@@ -20,20 +20,16 @@ if __name__ == "__main__":
 
     # 绘制行向量
     plt.quiver(
-        0,
-        0,
-        r1[0],
-        r1[1],
+        0, 0,
+        r1[0], r1[1],
         angles="xy",
         scale_units="xy",
         scale=1,
         color="r",
     )
     plt.quiver(
-        0,
-        0,
-        r2[0],
-        r2[1],
+        0, 0,
+        r2[0], r2[1],
         angles="xy",
         scale_units="xy",
         scale=1,

@@ -26,3 +26,5 @@ Please refer to paper "Optimization and Identification of Lattice Quantizers" fo
 In `ilc.py` is the implementation of iterative lattice construction algorithm from the original paper. Directly modified from the pseudocode. 
 
 In `test_2d.py` is the test code for a 2d-case visualization. It can output a hexagonal lattice as expected. 
+
+In `test_3d.py` is the test code for a 3d-case visualization. It may output a body-centered cubic lattice. 

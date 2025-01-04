@@ -28,3 +28,5 @@ In `ilc.py` is the implementation of iterative lattice construction algorithm fr
 In `test_2d.py` is the test code for a 2d-case visualization. It can output a hexagonal lattice as expected. 
 
 In `test_3d.py` is the test code for a 3d-case visualization. It may output a body-centered cubic lattice. 
+
+**In `draw_theta_image.py` is a code to draw the theta image of lattice, but it still has some bugs to be FIXED.**

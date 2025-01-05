@@ -39,10 +39,14 @@ In `test_3d.py` is the test code for a 3d-case visualization. It can output a bo
 2d and 3d cases are all correct as expected. Visulization results are as follows. You can also generate these results by directly running `test_2d.py` and `test_3d.py`.
 
 - 2d case
+
+  
   Basis vectors are plotted in red and blue respectively. Lattice points are black dots. It is clear that our implementation generates a hexagonal lattice.
   ![2d](figures/2d.png)
 
 - 3d case
+
+  
   Basis vectors are plotted in red, blue and green respectively. Lattice points are black dots. It is clear that our implementation generates a body-centered cubic lattice.
 
   Below are 3d visulization results looking from x,y,z axes respectively.

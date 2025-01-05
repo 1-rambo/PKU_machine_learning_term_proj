@@ -1,6 +1,6 @@
 # PKU_machine_learning_term_proj
 
-Author: Xu Yue, Yi Xiaoyu
+Author: Xu Yue, Yi Xiaoyu, An Ruibo
 
 ## Quickstart
 

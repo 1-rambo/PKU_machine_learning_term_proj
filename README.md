@@ -34,7 +34,7 @@ In `ilc.py` is the implementation of iterative lattice construction algorithm fr
 In `test_2d.py` is the test code for a 2d-case visualization. It can output a hexagonal lattice as expected. 
 
 
-In `test_3d.py` is the test code for a 3d-case visualization. It can output a body-centered cubic lattice.
+In `test_3d.py` is the test code for a 3d-case visualization. It can output a body-centered cubic lattice. Note that in this case we performed rotation for a better visualization.
 
 2d and 3d cases are all correct as expected. Visulization results are as follows. You can also generate these results by directly running `test_2d.py` and `test_3d.py`.
 

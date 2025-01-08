@@ -1,23 +1,26 @@
 #include <torch/torch.h>
 #include <torch/csrc/autograd/variable.h>
+#include <Eigen/Dense>
 #include <iostream>
+#include <cmath>
 
 torch::Tensor URAN(int n);
 torch::Tensor GRAN(int n, int m);
 torch::Tensor ORTH(torch::Tensor B);
 torch::Tensor RED(torch::Tensor B);
 torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x);
+Eigen::MatrixXf LLL(Eigen::MatrixXf v);
 
-int main() {
-    // for test
-    torch::Tensor B = torch::randn({5, 5});
-    torch::Tensor x = torch::randn({5});
-    std::cout << "*1* Generated URAN (5): " << URAN(5) << std::endl;
-    std::cout << "*2* Generated GRAN (3, 4): " << GRAN(3, 4) << std::endl;
-    std::cout << "*3* Orthogonal matrix from B: " << ORTH(B) << std::endl;
-    std::cout << "*4* Closest lattice point: " << CLP(5, B, x) << std::endl;
-    return 0;
-}
+// int main() {
+//     // for test
+//     torch::Tensor B = torch::randn({5, 5});
+//     torch::Tensor x = torch::randn({5});
+//     std::cout << "*1* Generated URAN (5): " << URAN(5) << std::endl;
+//     std::cout << "*2* Generated GRAN (3, 4): " << GRAN(3, 4) << std::endl;
+//     std::cout << "*3* Orthogonal matrix from B: " << ORTH(B) << std::endl;
+//     std::cout << "*4* Closest lattice point: " << CLP(5, B, x) << std::endl;
+//     return 0;
+// }
 
 torch::Tensor URAN(int n){
     return torch::rand(n);
@@ -29,18 +32,31 @@ torch::Tensor GRAN(int n, int m) {
 
 torch::Tensor ORTH(torch::Tensor B) {
     torch::Tensor A = torch::matmul(B, B.transpose(0, 1));
-    return torch::cholesky(A);
+    return torch::linalg::cholesky(A);
 }
 
 torch::Tensor RED(torch::Tensor B) {
-    // TODO
-    return torch::zeros({3, 4});
+    auto B_np = B.detach().cpu().to(torch::kFloat32);
+    Eigen::Map<Eigen::MatrixXf> B_eigen(B_np.data_ptr<float>(), B.size(0), B.size(1));
+    
+    Eigen::MatrixXf reduced = LLL(B_eigen);
+
+    // 修复正定性
+    // for (int i = 0; i < reduced.rows(); ++i) {
+    //     if (reduced(i, i) <= 0) {
+    //         reduced(i, i) += 1e-4;  // 确保主对角线元素为正
+    //     }
+    // }
+    
+    auto result = torch::from_blob(reduced.data(), {reduced.rows(), reduced.cols()}, torch::kFloat32).clone();
+    return result;
 }
 
 int sign(float x) {
     return (x > 0) ? 1 : -1;
 }
 
+// TODO: Current implementation is erroneous. Use index_put_() and index() instead.
 torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
     float C = std::numeric_limits<float>::infinity();
     int i = n;
@@ -52,14 +68,17 @@ torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
     torch::Tensor result = torch::zeros({n});
     torch::Tensor F = torch::zeros({n, n});
     F[n - 1] = x.clone();
+    // F.index_put_({n - 1}, x.clone());
+
 
     while (true) {
         while (true) {
             if (i != 0) {
                 i = i - 1;
                 for (int j = d[i].item<int>(); j > i; j--) {
+                    // F.index_put_({j - 1, i}, F.index({j, i}) - u[i] * B.index({j, i}));
                     F[j - 1][i] = F[j][i] - u[j] * B[j][i];
-                }
+                    }
                 p[i] = F[i][i] / B[i][i];
                 u[i] = torch::round(p[i]);
                 float y = (p[i].item<float>() - u[i].item<float>()) * B[i][i].item<float>();
@@ -101,7 +120,53 @@ torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
     }
 }
 
-torch::Tensor LLL(){
-    // TODO
-    return torch::zeros({3, 4});
+Eigen::MatrixXf orthogonal(const Eigen::MatrixXf& m) {
+    int n = m.rows();
+    int d = m.cols();
+    Eigen::MatrixXf M = Eigen::MatrixXf::Zero(n, d);
+    M.row(0) = m.row(0);
+
+    for (int i = 1; i < n; ++i) {
+        M.row(i) = m.row(i);
+        for (int j = 0; j < i; ++j) {
+            double u_ij = (m.row(i).dot(M.row(j))) / (M.row(j).squaredNorm());
+            M.row(i) -= u_ij * M.row(j);
+        }
+    }
+    return M;
+}
+
+Eigen::MatrixXf lll(Eigen::MatrixXf v) {
+    int n = v.rows();
+    int k = 2;
+    
+    while (k <= n) {
+        Eigen::MatrixXf V = orthogonal(v.topRows(k));
+        
+        for (int j = 0; j < k - 1; ++j) {
+            double u = (v.row(k - 1).dot(V.row(j))) / (V.row(j).squaredNorm());
+            v.row(k - 1) -= round(u) * v.row(j);
+        }
+
+        double u = (v.row(k - 1).dot(V.row(k - 2))) / (V.row(k - 2).squaredNorm());
+        if (V.row(k - 1).squaredNorm() >= (3.0 / 4.0 - u * u) * V.row(k - 2).squaredNorm()) {
+            k++;
+        } else {
+            v.row(k - 2).swap(v.row(k - 1));
+            k = std::max(k - 1, 2);
+        }
+    }
+    return v;
+}
+
+Eigen::MatrixXf LLL(Eigen::MatrixXf v) {
+    Eigen::MatrixXf a = lll(v);
+    Eigen::MatrixXf b = lll(a);
+
+    while (!a.isApprox(b)) {
+        a = b;
+        b = lll(b);
+    }
+
+    return b;
 }

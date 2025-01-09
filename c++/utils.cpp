@@ -11,7 +11,7 @@ torch::Tensor RED(torch::Tensor B);
 torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x);
 Eigen::MatrixXf LLL(Eigen::MatrixXf v);
 
-// int main() {
+// void test_all() {
 //     // for test
 //     torch::Tensor B = torch::randn({5, 5});
 //     torch::Tensor x = torch::randn({5});
@@ -19,14 +19,18 @@ Eigen::MatrixXf LLL(Eigen::MatrixXf v);
 //     std::cout << "*2* Generated GRAN (3, 4): " << GRAN(3, 4) << std::endl;
 //     std::cout << "*3* Orthogonal matrix from B: " << ORTH(B) << std::endl;
 //     std::cout << "*4* Closest lattice point: " << CLP(5, B, x) << std::endl;
-//     return 0;
+//     return;
 // }
 
 torch::Tensor URAN(int n){
     return torch::rand(n);
 }
 
+const bool INIT_EYE = 0; // for testing
+
 torch::Tensor GRAN(int n, int m) {
+    if(INIT_EYE)
+        return torch::eye(n, m);
     return torch::randn({n, m});
 }
 
@@ -58,9 +62,8 @@ torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
     torch::Tensor Delta = torch::zeros({n});
     torch::Tensor result = torch::zeros({n});
     torch::Tensor F = torch::zeros({n, n});
-    F[n - 1] = x.clone();
-    // F.index_put_({n - 1}, x.clone());
-
+    // F[n - 1] = x.clone();
+    F.index_put_({n - 1}, x.clone());
 
     while (true) {
         while (true) {
@@ -111,7 +114,8 @@ torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
         }
         for (int j = m - 1; j >= 0; j--) {
             if (d[j].item<int>() < i) {
-                d[j] = i;
+                // d[j] = i;
+                d.index_put_({j}, i);
             } else {
                 break;
             }
@@ -119,7 +123,7 @@ torch::Tensor CLP(int n, torch::Tensor B, torch::Tensor x) {
     }
 }
 
-Eigen::MatrixXf orthogonal(const Eigen::MatrixXf& m) {
+Eigen::MatrixXf orthogonal(Eigen::MatrixXf m) {
     int n = m.rows();
     int d = m.cols();
     Eigen::MatrixXf M = Eigen::MatrixXf::Zero(n, d);
@@ -161,7 +165,6 @@ Eigen::MatrixXf lll(Eigen::MatrixXf v) {
 Eigen::MatrixXf LLL(Eigen::MatrixXf v) {
     Eigen::MatrixXf a = lll(v);
     Eigen::MatrixXf b = lll(a);
-    // printf("LLL\n");
 
     while (!a.isApprox(b)) {
         a = b;

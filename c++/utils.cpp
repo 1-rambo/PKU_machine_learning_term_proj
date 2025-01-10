@@ -1,3 +1,7 @@
+// #ifndef DEBUG
+// #define DEBUG
+// #endif
+
 #include <torch/torch.h>
 #include <torch/csrc/autograd/variable.h>
 #include <Eigen/Dense>
@@ -22,20 +26,30 @@ Eigen::MatrixXf LLL(Eigen::MatrixXf v);
 //     return;
 // }
 
+const static bool INIT_ZERO = 1; // for testing
+
 torch::Tensor URAN(int n){
+    #ifdef DEBUG
+    if(INIT_ZERO)
+        return torch::tensor({1.8, -0.2});
+        // return torch::zeros(n);
+    #endif
     return torch::rand(n);
 }
 
-const bool INIT_EYE = 0; // for testing
-
 torch::Tensor GRAN(int n, int m) {
-    if(INIT_EYE)
+    #ifdef DEBUG
+    if(INIT_ZERO)
         return torch::eye(n, m);
+    #endif
     return torch::randn({n, m});
 }
 
 torch::Tensor ORTH(torch::Tensor B) {
     torch::Tensor A = torch::matmul(B, B.transpose(0, 1));
+    // #ifndef DEBUG
+    // std::cout << A << std::endl;
+    // #endif
     return torch::linalg::cholesky(A);
 }
 
@@ -44,7 +58,8 @@ torch::Tensor RED(torch::Tensor B) {
     Eigen::Map<Eigen::MatrixXf> B_eigen(B_np.data_ptr<float>(), B.size(0), B.size(1));
     Eigen::MatrixXf reduced = LLL(B_eigen);
     
-    auto result = torch::from_blob(reduced.data(), {reduced.rows(), reduced.cols()}, torch::kFloat32).clone();
+    auto result = 
+        torch::from_blob(reduced.data(), {reduced.rows(), reduced.cols()}, torch::kFloat32).clone();
     return result;
 }
 
@@ -132,7 +147,7 @@ Eigen::MatrixXf orthogonal(Eigen::MatrixXf m) {
     for (int i = 1; i < n; ++i) {
         M.row(i) = m.row(i);
         for (int j = 0; j < i; ++j) {
-            double u_ij = (m.row(i).dot(M.row(j))) / (M.row(j).squaredNorm());
+            float u_ij = (m.row(i).dot(M.row(j))) / (M.row(j).squaredNorm());
             M.row(i) -= u_ij * M.row(j);
         }
     }
@@ -147,11 +162,11 @@ Eigen::MatrixXf lll(Eigen::MatrixXf v) {
         Eigen::MatrixXf V = orthogonal(v.topRows(k));
         
         for (int j = 0; j < k - 1; ++j) {
-            double u = (v.row(k - 1).dot(V.row(j))) / (V.row(j).squaredNorm());
+            float u = (v.row(k - 1).dot(V.row(j))) / (V.row(j).squaredNorm());
             v.row(k - 1) -= round(u) * v.row(j);
         }
 
-        double u = (v.row(k - 1).dot(V.row(k - 2))) / (V.row(k - 2).squaredNorm());
+        float u = (v.row(k - 1).dot(V.row(k - 2))) / (V.row(k - 2).squaredNorm());
         if (V.row(k - 1).squaredNorm() >= (3.0 / 4.0 - u * u) * V.row(k - 2).squaredNorm()) {
             k++;
         } else {
@@ -166,10 +181,20 @@ Eigen::MatrixXf LLL(Eigen::MatrixXf v) {
     Eigen::MatrixXf a = lll(v);
     Eigen::MatrixXf b = lll(a);
 
+    #ifdef DEBUG
+    printf("**LLL begin**\n");
+    std::cout << b << std::endl;
+    #endif
+
     while (!a.isApprox(b)) {
         a = b;
         b = lll(b);
+        #ifdef DEBUG
+        std::cout << b << std::endl;
+        #endif
     }
-
+    #ifdef DEBUG
+    printf("**LLL Done**\n");
+    #endif
     return b;
 }

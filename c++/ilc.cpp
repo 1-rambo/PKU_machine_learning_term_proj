@@ -16,7 +16,7 @@ extern torch::Tensor CLP(int, torch::Tensor, torch::Tensor);
 
 const float mu_0 = 0.005;
 const float ratio = 200;
-const int T = 100000; // Set to 1000000 for a full result
+const int T = 1000000; // Set to 1000000 for a full result
 const int T_r = 100;
 
 torch::Tensor init_tensor(int n){
@@ -47,6 +47,7 @@ torch::Tensor iterative_lattice_construction(int n) {
         #else
         printf("%d/%d\r", t, T); // Progress bar
         #endif
+
         float mu = mu_0 * std::pow(ratio, -1.0 * t / (T - 1));
         torch::Tensor z = URAN(n);            
         torch::Tensor tmp = CLP(n, B, torch::matmul(z, B));

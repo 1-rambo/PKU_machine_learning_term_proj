@@ -26,7 +26,7 @@ Eigen::MatrixXf LLL(Eigen::MatrixXf v);
 //     return;
 // }
 
-const static bool INIT_ZERO = 1; // for testing
+const static bool INIT_ZERO = 0; // for testing
 
 torch::Tensor URAN(int n){
     #ifdef DEBUG
@@ -38,29 +38,43 @@ torch::Tensor URAN(int n){
 }
 
 torch::Tensor GRAN(int n, int m) {
-    #ifdef DEBUG
+    // #ifdef DEBUG
     if(INIT_ZERO)
         return torch::eye(n, m);
-    #endif
+    // #endif
     return torch::randn({n, m});
 }
 
 torch::Tensor ORTH(torch::Tensor B) {
     torch::Tensor A = torch::matmul(B, B.transpose(0, 1));
-    // #ifndef DEBUG
-    // std::cout << A << std::endl;
-    // #endif
-    return torch::linalg::cholesky(A);
+    auto result = torch::linalg::cholesky(A);
+
+    #ifdef DEBUG
+    printf("*ORTH BEGIN*\n");
+    std::cout << "A:\n" << A << "\nresult\n" <<  std::endl;
+    printf("*ORTH END*\n");
+    #endif
+    return result;
 }
 
 torch::Tensor RED(torch::Tensor B) {
+    #ifdef DEBUG
+    printf("**RED BEGIN**\n");
+    #endif
+
     auto B_np = B.detach().cpu().to(torch::kFloat32);
     Eigen::Map<Eigen::MatrixXf> B_eigen(B_np.data_ptr<float>(), B.size(0), B.size(1));
     Eigen::MatrixXf reduced = LLL(B_eigen);
     
     auto result = 
         torch::from_blob(reduced.data(), {reduced.rows(), reduced.cols()}, torch::kFloat32).clone();
-    return result;
+    #ifdef DEBUG
+    std::cout << "B_eigen:\n" << B_eigen << "\nreduced:\n" << reduced 
+        << "\nresult:\n" << result << std::endl;
+    printf("**RED END**\n");
+    #endif
+
+    return result.t();
 }
 
 int sign(float x) {
